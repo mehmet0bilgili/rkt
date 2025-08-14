@@ -1,0 +1,86 @@
+[
+    {
+        "timestamp": "2025-08-14 04:06:48",
+        "action": "add_product",
+        "product": "kola",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:06:57",
+        "action": "add_product",
+        "product": "su",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:09:02",
+        "action": "delete_product",
+        "product": "kola",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:09:07",
+        "action": "delete_product",
+        "product": "su",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:09:14",
+        "action": "add_product",
+        "product": "kola",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:09:23",
+        "action": "add_product",
+        "product": "su",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:09:54",
+        "action": "add_stock",
+        "product": "kola",
+        "quantity": 200
+    },
+    {
+        "timestamp": "2025-08-14 04:10:30",
+        "action": "delete_product",
+        "product": "kola",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:10:34",
+        "action": "delete_product",
+        "product": "su",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:10:40",
+        "action": "add_product",
+        "product": "su",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:10:46",
+        "action": "add_stock",
+        "product": "su",
+        "quantity": 500
+    },
+    {
+        "timestamp": "2025-08-14 04:10:53",
+        "action": "add_product",
+        "product": "kola",
+        "quantity": 0
+    },
+    {
+        "timestamp": "2025-08-14 04:11:00",
+        "action": "add_stock",
+        "product": "kola",
+        "quantity": 50
+    },
+    {
+        "timestamp": "2025-08-14 04:11:06",
+        "action": "use_stock",
+        "product": "kola",
+        "quantity": 10
+    }
+]

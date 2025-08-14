@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burduricus Hotelcilik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Rezervasyon ve Konaklama Sistemi</h1>
+        
+        <!-- Rezervasyon Formu -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Yeni Rezervasyon</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Ad Soyad</label>
+                    <input type="text" id="name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700">Tarih</label>
+                    <input type="date" id="date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="time" class="block text-sm font-medium text-gray-700">Saat</label>
+                    <input type="time" id="time" min="09:00" max="17:00" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button onclick="makeReservation()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">Rezervasyon Yap</button>
+            </div>
+        </div>
+        
+        <!-- Bildirim Alanı -->
+        <div id="confirmation" class="mt-4 hidden p-4 bg-green-100 text-green-700 rounded-md"></div>
+        <div id="error" class="mt-4 hidden p-4 bg-red-100 text-red-700 rounded-md"></div>
+        
+        <!-- Konaklayanlar Listesi -->
+        <h2 class="text-xl font-semibold mt-6 mb-2 text-gray-800">Konaklayanlar</h2>
+        <ul id="activeGuests" class="divide-y divide-gray-200 mb-6"></ul>
+        
+        <!-- Bekleyen Rezervasyonlar -->
+        <h2 class="text-xl font-semibold mt-6 odel mt-6 mb-2 text-gray-800">Bekleyen Rezervasyonlar</h2>
+        <ul id="reservationList" class="divide-y divide-gray-200"></ul>
+    </div>
+
+    <script>
+        // Tarih formatını GG.AA.YYYY olarak dönüştür
+        function formatDateToTR(dateStr) {
+            const date = new Date(dateStr);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        // Mevcut tarih ve saati al
+        function getCurrentDateTime() {
+            const now = new Date();
+            return {
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().split(' ')[0].slice(0, 5)
+            };
+        }
+
+        // Rezervasyonları yerel depolamada saklama ve sınıflandırma
+        function loadReservations() {
+            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+            const activeGuestsList = document.getElementById('activeGuests');
+            const reservationList = document.getElementById('reservationList');
+            activeGuestsList.innerHTML = '';
+            reservationList.innerHTML = '';
+
+            const { date: currentDate, time: currentTime } = getCurrentDateTime();
+
+            reservations.forEach((res, index) => {
+                const li = document.createElement('li');
+                li.className = 'py-2 flex justify-between items-center';
+                const formattedDate = formatDateToTR(res.date);
+                li.innerHTML = `
+                    <span>${res.name} - ${formattedDate} ${res.time}</span>
+                    <button onclick="cancelReservation(${index})" class="text-red-500 hover:text-red-700 font-medium">İptal</button>
+                `;
+
+                // Check-out zamanını hesapla (rezervasyon saatinden 1 saat sonrası)
+                const [hours, minutes] = res.time.split(':').map(Number);
+                const checkOutTime = `${String(hours + 1).padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+                // Rezervasyon durumu kontrolü
+                if (res.date < currentDate || (res.date === currentDate && checkOutTime <= currentTime)) {
+                    // Check-out zamanı geçmiş, otomatik olarak sil
+                    showMessage('confirmation', `Check-out: ${res.name} - ${formattedDate} ${res.time}`);
+                    reservations.splice(index, 1);
+                    localStorage.setItem('reservations', JSON.stringify(reservations));
+                    loadReservations(); // Listeyi güncelle
+                    return;
+                } else if (res.date === currentDate && res.time <= currentTime) {
+                    // Konaklayanlar listesine ekle
+                    activeGuestsList.appendChild(li);
+                } else {
+                    // Bekleyen rezervasyonlar listesine ekle
+                    reservationList.appendChild(li);
+                }
+            });
+        }
+
+        function showMessage(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.classList.remove('hidden');
+            setTimeout(() => element.classList.add('hidden'), 3000);
+        }
+
+        function isPastDate(dateStr) {
+            const { date: currentDate } = getCurrentDateTime();
+            return dateStr < currentDate;
+        }
+
+        function isValidTime(timeStr) {
+            const [hours] = timeStr.split(':').map(Number);
+            return hours >= 9 && hours <= 17;
+        }
+
+        function isSlotTaken(date, time) {
+            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+            return reservations.some(res => res.date === date && res.time === time);
+        }
+
+        function makeReservation() {
+            const name = document.getElementById('name').value.trim();
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            if (!name || !date || !time) {
+                showMessage('error', 'Lütfen tüm alanları doldurun.', true);
+                return;
+            }
+
+            if (isPastDate(date)) {
+                showMessage('error', 'Geçmiş tarihe rezervasyon yapılamaz.', true);
+                return;
+            }
+
+            if (!isValidTime(time)) {
+                showMessage('error', 'Rezervasyonlar yalnızca 09:00-17:00 saatleri arasında yapılabilir.', true);
+                return;
+            }
+
+            if (isSlotTaken(date, time)) {
+                showMessage('error', 'Bu tarih ve saatte başka bir rezervasyon mevcut.', true);
+                return;
+            }
+
+            const reservation = { name, date, time };
+            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+            reservations.push(reservation);
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+
+            const formattedDate = formatDateToTR(date);
+            showMessage('confirmation', `Rezervasyon yapıldı: ${name} - ${formattedDate} ${time}`);
+            
+            // Formu sıfırla
+            document.getElementById('name').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('time').value = '';
+
+            // Rezervasyon listesini güncelle
+            loadReservations();
+        }
+
+        function cancelReservation(index) {
+            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+            const removed = reservations.splice(index, 1);
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+            const formattedDate = formatDateToTR(removed[0].date);
+            showMessage('confirmation', `Rezervasyon iptal edildi: ${removed[0].name} - ${formattedDate} ${removed[0].time}`);
+            loadReservations();
+        }
+
+        // Sayfa yüklendiğinde mevcut rezervasyonları göster
+        window.onload = loadReservations;
+    </script>
+</body>
+</html>
